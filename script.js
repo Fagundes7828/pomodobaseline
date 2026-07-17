@@ -5,8 +5,11 @@
   var SHORT_BREAK_MIN = 10;
   var LONG_BREAK_MIN = 20;
   var CYCLES_BEFORE_LONG_BREAK = 4;
+
   var TASKS_KEY = "pomodoro-tasks";
   var STREAK_KEY = "pomodoro-streak";
+  var STATS_KEY = "pomodoro-stats";
+  var SESSION_KEY = "pomodoro-session";
 
   var FOCUS_CIRCUMFERENCE = 2 * Math.PI * 108;
   var BREAK_CIRCUMFERENCE = 2 * Math.PI * 155;
@@ -74,15 +77,36 @@
     return new Date().toISOString().slice(0, 10);
   }
 
+  // ---------- persistence ----------
+
+  function safeParse(raw, fallback) {
+    if (!raw) return fallback;
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      return fallback;
+    }
+  }
+
   function load() {
-    try {
-      var savedTasks = localStorage.getItem(TASKS_KEY);
-      if (savedTasks) state.tasks = JSON.parse(savedTasks);
-    } catch (e) {}
-    try {
-      var savedStreak = localStorage.getItem(STREAK_KEY);
-      if (savedStreak) state.streak = JSON.parse(savedStreak);
-    } catch (e) {}
+    state.tasks = safeParse(localStorage.getItem(TASKS_KEY), []);
+    state.streak = safeParse(localStorage.getItem(STREAK_KEY), { count: 0, lastDate: null });
+
+    var stats = safeParse(localStorage.getItem(STATS_KEY), { focusCount: 0, shortBreakCount: 0, longBreakCount: 0 });
+    state.focusCount = stats.focusCount || 0;
+    state.shortBreakCount = stats.shortBreakCount || 0;
+    state.longBreakCount = stats.longBreakCount || 0;
+
+    var session = safeParse(localStorage.getItem(SESSION_KEY), null);
+    if (session && session.mode && session.mode !== "idle") {
+      var taskStillExists = session.activeId && state.tasks.some(function (t) { return t.id === session.activeId; });
+      if (taskStillExists && typeof session.remaining === "number" && session.remaining > 0) {
+        state.mode = session.mode;
+        state.activeId = session.activeId;
+        state.remaining = session.remaining;
+        state.running = false; // always resume paused; the person presses "retomar"
+      }
+    }
   }
 
   function saveTasks() {
@@ -91,6 +115,26 @@
 
   function saveStreak() {
     localStorage.setItem(STREAK_KEY, JSON.stringify(state.streak));
+  }
+
+  function saveStats() {
+    localStorage.setItem(STATS_KEY, JSON.stringify({
+      focusCount: state.focusCount,
+      shortBreakCount: state.shortBreakCount,
+      longBreakCount: state.longBreakCount,
+    }));
+  }
+
+  function saveSession() {
+    if (state.mode === "idle") {
+      localStorage.removeItem(SESSION_KEY);
+      return;
+    }
+    localStorage.setItem(SESSION_KEY, JSON.stringify({
+      mode: state.mode,
+      activeId: state.activeId,
+      remaining: state.remaining,
+    }));
   }
 
   function registerStreakTick() {
@@ -102,16 +146,13 @@
     saveStreak();
   }
 
+  // ---------- core logic ----------
+
   function getActiveTask() {
     for (var i = 0; i < state.tasks.length; i++) {
       if (state.tasks[i].id === state.activeId) return state.tasks[i];
     }
     return null;
-  }
-
-  function addSecondToActiveTask() {
-    var task = getActiveTask();
-    if (task) task.spent += 1;
   }
 
   function tick() {
@@ -123,30 +164,42 @@
 
       if (state.mode === "focus") {
         state.focusCount += 1;
+        saveStats();
+
         var task = getActiveTask();
         if (task) {
           task.cycles += 1;
           state.justFinished = { title: task.title, spent: task.spent };
+          saveTasks();
         }
-        saveTasks();
         registerStreakTick();
 
         var goLong = state.focusCount % CYCLES_BEFORE_LONG_BREAK === 0;
         state.mode = goLong ? "long-break" : "short-break";
         state.remaining = (goLong ? LONG_BREAK_MIN : SHORT_BREAK_MIN) * 60;
+        saveSession();
         render();
         startInterval();
       } else if (state.mode === "short-break" || state.mode === "long-break") {
         if (state.mode === "short-break") state.shortBreakCount += 1;
         else state.longBreakCount += 1;
+        saveStats();
         state.running = false;
+        saveSession();
         showModal();
         render();
       }
       return;
     }
 
-    if (state.mode === "focus") addSecondToActiveTask();
+    if (state.mode === "focus") {
+      var activeTask = getActiveTask();
+      if (activeTask) {
+        activeTask.spent += 1;
+        saveTasks();
+      }
+    }
+    saveSession();
     render();
   }
 
@@ -177,6 +230,7 @@
       state.running = false;
       state.remaining = FOCUS_MIN * 60;
       stopInterval();
+      saveSession();
     }
     saveTasks();
     render();
@@ -189,6 +243,7 @@
     state.running = true;
     state.justFinished = null;
     hideModal();
+    saveSession();
     startInterval();
     render();
   }
@@ -198,6 +253,7 @@
     state.running = !state.running;
     if (state.running) startInterval();
     else stopInterval();
+    saveSession();
     render();
   }
 
@@ -209,6 +265,7 @@
     state.remaining = FOCUS_MIN * 60;
     state.justFinished = null;
     hideModal();
+    saveSession();
     render();
   }
 
@@ -222,6 +279,14 @@
   function hideModal() {
     el.modalOverlay.classList.add("hidden");
   }
+
+  function escapeHtml(str) {
+    var div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ---------- rendering ----------
 
   function render() {
     el.streakCount.textContent = state.streak.count;
@@ -301,11 +366,7 @@
     el.toggleBtn.textContent = state.running ? "Pausar" : "Retomar";
   }
 
-  function escapeHtml(str) {
-    var div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
-  }
+  // ---------- wiring ----------
 
   el.addBtn.addEventListener("click", addTask);
   el.taskInput.addEventListener("keydown", function (e) {
@@ -317,4 +378,6 @@
 
   load();
   render();
+  // A session restored from a closed tab always resumes paused (never silently
+  // running in the background), so "Retomar" is what kicks the interval back off.
 })();
