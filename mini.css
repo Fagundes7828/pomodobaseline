@@ -1,0 +1,37 @@
+/* POMODO — mini janela flutuante
+ * Só sobrescreve layout/tamanho; cores, fonte e sombras vêm de popup.css. */
+
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    align-items: center;
+}
+
+.mini-app {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    height: 100%;
+    padding: 20px 14px;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+}
+
+.mini-app .timer-wrap {
+    gap: 18px;
+}
+
+.mini-ring {
+    width: 168px;
+    height: 168px;
+}
+
+.mini-toggle {
+    width: 58px;
+    height: 58px;
+}
+.mini-toggle svg { width: 24px; height: 24px; }

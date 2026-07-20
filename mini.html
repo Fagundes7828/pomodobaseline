@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Reaproveita as variáveis, a fonte Monocraft e os estilos do timer do
+         popup principal — mesma casca visual, só um layout mais enxuto por cima. -->
+    <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="mini.css" />
+    <script src="mini.js" type="module"></script>
+    <title>POMODO</title>
+</head>
+
+<body>
+    <main id="app" class="app mini-app" data-phase="focus">
+        <div class="timer-wrap">
+            <div class="timer-ring mini-ring">
+                <svg viewBox="0 0 200 200" class="ring-svg" aria-hidden="true">
+                    <circle class="ring-track" cx="100" cy="100" r="90" />
+                    <circle id="ring-progress" class="ring-progress" cx="100" cy="100" r="90" />
+                </svg>
+                <div class="timer-center">
+                    <span id="timer-clock" class="timer-clock">25:00</span>
+                    <span id="timer-phase-label" class="timer-phase-label">Foco</span>
+                </div>
+            </div>
+
+            <button id="btn-toggle" class="ctrl-btn ctrl-btn--primary mini-toggle" type="button" aria-label="Iniciar">
+                <svg id="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                <svg id="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></svg>
+            </button>
+        </div>
+    </main>
+</body>
+
+</html>

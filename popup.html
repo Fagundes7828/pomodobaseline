@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="popup.css" />
+    <script src="popup.js" type="module"></script>
+    <title>POMODO</title>
+</head>
+
+<body>
+    <main id="app" class="app" data-phase="focus">
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-text">
+                    <h1 class="brand-name" aria-label="POMODO">POM<span class="brand-o" aria-hidden="true"></span>DO</h1>
+                    <p id="brand-tagline" class="brand-tagline">Focus • Play • Achieve</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button id="detach-toggle" class="icon-btn" type="button" aria-label="Destacar janela flutuante">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" aria-hidden="true">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <path d="M15 3h6v6" /><path d="M10 14 21 3" />
+                    </svg>
+                </button>
+                <button id="theme-toggle" class="icon-btn theme-toggle" type="button" aria-label="Alternar tema">
+                    <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="4" />
+                        <path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" />
+                        <path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" />
+                        <path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" />
+                    </svg>
+                    <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <section class="timer-wrap" aria-live="polite">
+            <div class="timer-ring">
+                <svg viewBox="0 0 200 200" class="ring-svg" aria-hidden="true">
+                    <circle class="ring-track" cx="100" cy="100" r="90" />
+                    <circle id="ring-progress" class="ring-progress" cx="100" cy="100" r="90" />
+                </svg>
+                <div class="timer-center">
+                    <span id="timer-clock" class="timer-clock">25:00</span>
+                    <span id="timer-phase-label" class="timer-phase-label">Foco</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="btn-reset" class="ctrl-btn ctrl-btn--ghost" type="button" aria-label="Reiniciar ciclo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 3v6h6" />
+                    </svg>
+                </button>
+                <button id="btn-toggle" class="ctrl-btn ctrl-btn--primary" type="button" aria-label="Iniciar">
+                    <svg id="ico-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                    <svg id="ico-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></svg>
+                </button>
+                <button id="btn-skip" class="ctrl-btn ctrl-btn--ghost" type="button" aria-label="Pular para o próximo ciclo">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5l10 7-10 7V5zM18 5h2v14h-2z" /></svg>
+                </button>
+            </div>
+            <p id="cycle-count" class="cycle-count">Sessão 1</p>
+        </section>
+
+        <section class="modes" aria-labelledby="modes-title">
+            <h2 id="modes-title" class="section-title">Ciclos</h2>
+            <div id="mode-cards" class="mode-cards" role="radiogroup" aria-labelledby="modes-title">
+                <button class="mode-card" data-phase="focus" role="radio" type="button">
+                    <span class="mode-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                    </span>
+                    <span class="mode-body">
+                        <span class="mode-name">Foco</span>
+                        <span class="mode-desc" data-role="duration">25 min</span>
+                    </span>
+                    <span class="mode-check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg></span>
+                </button>
+                <button class="mode-card" data-phase="short" role="radio" type="button">
+                    <span class="mode-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z" /><path d="M17 10h2a2.5 2.5 0 0 1 0 5h-2" /></svg>
+                    </span>
+                    <span class="mode-body">
+                        <span class="mode-name">Descanso Curto</span>
+                        <span class="mode-desc" data-role="duration">5 min</span>
+                    </span>
+                    <span class="mode-check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg></span>
+                </button>
+                <button class="mode-card" data-phase="long" role="radio" type="button">
+                    <span class="mode-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2C8 6 5 9.5 5 13a7 7 0 0 0 14 0c0-3.5-3-7-7-11Z" /></svg>
+                    </span>
+                    <span class="mode-body">
+                        <span class="mode-name">Descanso Longo</span>
+                        <span class="mode-desc" data-role="duration">15 min</span>
+                    </span>
+                    <span class="mode-check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg></span>
+                </button>
+            </div>
+            <p class="modes-note">Clicar em um ciclo troca a fase e reinicia o tempo dela.</p>
+        </section>
+
+        <section class="advanced">
+            <button id="settings-toggle" class="advanced-toggle" type="button" aria-expanded="false" aria-controls="settings-panel">
+                <span>Configurações</span>
+                <svg class="chevron" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </button>
+            <div id="settings-panel" class="advanced-panel" hidden>
+                <div class="setting-row">
+                    <label for="set-focus">Tempo de Trabalho (min)</label>
+                    <input id="set-focus" type="number" min="1" max="180" step="1" />
+                </div>
+                <div class="setting-row">
+                    <label for="set-short">Descanso Curto (min)</label>
+                    <input id="set-short" type="number" min="1" max="180" step="1" />
+                </div>
+                <div class="setting-row">
+                    <label for="set-long">Descanso Longo (min)</label>
+                    <input id="set-long" type="number" min="1" max="180" step="1" />
+                </div>
+                <div class="setting-row">
+                    <label for="set-every">Descanso longo a cada (sessões)</label>
+                    <input id="set-every" type="number" min="2" max="12" step="1" />
+                </div>
+                <div class="setting-row setting-row--switch">
+                    <label for="set-autostart">Encadear próximo ciclo automaticamente</label>
+                    <input id="set-autostart" type="checkbox" class="switch" />
+                </div>
+                <div class="setting-row setting-row--switch">
+                    <label for="set-notify">Notificações do sistema</label>
+                    <input id="set-notify" type="checkbox" class="switch" />
+                </div>
+                <button id="settings-reset" class="settings-reset" type="button">Restaurar padrões</button>
+            </div>
+        </section>
+
+        <footer class="app-footer">
+            <p class="footer-note">Método Pomodoro • trabalho, descanso, repita.</p>
+        </footer>
+    </main>
+</body>
+
+</html>

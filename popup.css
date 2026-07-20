@@ -1,0 +1,512 @@
+/*
+ * POMODO — Timer Pomodoro
+ * Paleta e padrões de sombra/tipografia herdados do mesmo design system
+ * (fundo puro-preto, cartões com "sticker shadow" offset, tipografia pixelada).
+ */
+
+/* Monocraft — fonte pixelada no estilo do Minecraft, auto-hospedada (extensões
+ * MV3 não carregam fontes remotas). © 2022 Idrees Hassan, SIL OFL 1.1 (ver
+ * fonts/Monocraft-OFL-LICENSE.txt). Usada em todo o popup — títulos, corpo e
+ * números — a pedido: uma única fonte para tudo. */
+@font-face {
+    font-family: "Monocraft";
+    src: url("fonts/Monocraft.woff2") format("woff2");
+    font-weight: 400 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    color-scheme: dark;
+
+    --bg: #000000;
+    --surface: #141414;
+    --surface-2: #1c1c1c;
+    --surface-3: #262626;
+    --border: #333333;
+    --border-soft: #262626;
+
+    --text: #f1f1f1;
+    --text-dim: #a6a6a6;
+    --text-faint: #717171;
+
+    /* Três fases, três cores — as mesmas já usadas no design original. */
+    --focus: #ff2d52;
+    --focus-soft: rgba(255, 45, 82, 0.14);
+    --focus-ghost: rgba(255, 45, 82, 0.5);
+
+    --short: #2ba640;
+    --short-soft: rgba(43, 166, 64, 0.14);
+    --short-ghost: rgba(43, 166, 64, 0.5);
+
+    --long: #4696ff;
+    --long-soft: rgba(70, 150, 255, 0.14);
+    --long-ghost: rgba(70, 150, 255, 0.5);
+
+    --pop: #000000;
+    --radius: 12px;
+    --radius-sm: 9px;
+    --ease: cubic-bezier(0.2, 0, 0, 1);
+    --spring: cubic-bezier(0.2, 0.9, 0.25, 1.18);
+
+    /* Uma fonte pixelada só para tudo: títulos, corpo e números. VCR OSD Mono
+     * fica como segunda opção *se* você instalá-la no sistema (não é
+     * redistribuível livremente, então não vem embutida — ver nota no README). */
+    --font-pixel: "Monocraft", "VCR OSD Mono", ui-monospace, "Cascadia Code", monospace;
+    --font: var(--font-pixel);
+    --font-mono: var(--font-pixel);
+}
+
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+        color-scheme: light;
+        --bg: #ffffff;
+        --surface: #f7f7f7;
+        --surface-2: #eeeeee;
+        --surface-3: #e2e2e2;
+        --border: #dcdcdc;
+        --border-soft: #e8e8e8;
+        --text: #0f0f0f;
+        --text-dim: #5c5c5c;
+        --text-faint: #8c8c8c;
+    }
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
+    --bg: #ffffff;
+    --surface: #f7f7f7;
+    --surface-2: #eeeeee;
+    --surface-3: #e2e2e2;
+    --border: #dcdcdc;
+    --border-soft: #e8e8e8;
+    --text: #0f0f0f;
+    --text-dim: #5c5c5c;
+    --text-faint: #8c8c8c;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body { margin: 0; padding: 0; background: var(--bg); }
+
+body {
+    font-family: var(--font);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    justify-content: center;
+}
+
+html { scrollbar-width: thin; scrollbar-color: var(--focus) transparent; }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: var(--focus);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+}
+
+.app {
+    --phase-color: var(--focus);
+    --phase-soft: var(--focus-soft);
+    --phase-ghost: var(--focus-ghost);
+    position: relative;
+    width: 100%;
+    min-width: 340px;
+    max-width: 400px;
+    padding: 18px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: rise 220ms var(--ease) both;
+}
+
+.app[data-phase="short"] { --phase-color: var(--short); --phase-soft: var(--short-soft); --phase-ghost: var(--short-ghost); }
+.app[data-phase="long"] { --phase-color: var(--long); --phase-soft: var(--long-soft); --phase-ghost: var(--long-ghost); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } }
+
+/* ---------------------------------------------------------------- Header */
+.app-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.brand-name {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+}
+
+/* O "O" de PomODO é o selo vivo do app: vermelho fixo (pedido explícito),
+   quadrado e parado enquanto pausado, vira um círculo pulsante quando o
+   timer está rodando — mesma ideia do selo degraded → synced do design
+   original, aqui mapeada para pausado → ativo, mas sem trocar de cor por fase. */
+.brand-o {
+    position: relative;
+    display: inline-block;
+    width: 0.56em;
+    height: 0.56em;
+    margin: 0 0.02em;
+    vertical-align: baseline;
+    transform: translateY(0.05em);
+    box-sizing: border-box;
+    border: 0.16em solid var(--focus);
+    border-radius: 0;
+    color: var(--focus);
+    transition: border-radius 320ms var(--spring), background 220ms var(--ease), box-shadow 220ms var(--ease);
+}
+
+.app[data-running="true"] .brand-o {
+    border-radius: 50%;
+    background: var(--focus);
+    box-shadow: 0 0 9px -1px var(--focus-ghost);
+}
+
+.app[data-running="true"] .brand-o::after {
+    content: "";
+    position: absolute;
+    inset: -0.16em;
+    border-radius: 50%;
+    border: 0.1em solid var(--focus);
+    opacity: 0.6;
+    animation: pulse 2s var(--ease) infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.8); opacity: 0.6; }
+    70% { transform: scale(1.9); opacity: 0; }
+    100% { opacity: 0; }
+}
+
+.brand-tagline { margin: 2px 0 0; font-size: 12px; color: var(--text-dim); }
+
+.icon-btn {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: border-color 150ms var(--ease), color 150ms var(--ease), transform 120ms var(--spring);
+}
+.icon-btn:hover { border-color: var(--text-faint); color: var(--text); transform: translateY(-1px); }
+.icon-btn svg { width: 17px; height: 17px; }
+.icon-btn.theme-toggle .ico-moon { display: none; }
+:root[data-theme="light"] .icon-btn.theme-toggle .ico-sun { display: none; }
+:root[data-theme="light"] .icon-btn.theme-toggle .ico-moon { display: block; }
+@media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) .icon-btn.theme-toggle .ico-moon { display: block; }
+}
+
+/* ---------------------------------------------------------------- Timer */
+.timer-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+.timer-ring { position: relative; width: 220px; height: 220px; }
+.ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--surface-2); stroke-width: 10; }
+.ring-progress {
+    fill: none;
+    stroke: var(--phase-color);
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 565.48;
+    stroke-dashoffset: 565.48;
+    filter: drop-shadow(0 0 6px var(--phase-ghost));
+    transition: stroke 200ms var(--ease);
+}
+
+/* O preenchimento do anel roda como animação CSS nativa (não como um valor
+   que o JS recalcula a cada segundo). O motivo é prático: quando a mini
+   janela flutuante perde o foco, o Chrome atrasa/pausa os timers de
+   JavaScript da página para economizar recursos, e um anel atualizado por
+   setInterval trava nesse cenário. Uma @keyframes é responsabilidade do
+   compositor do navegador, não do event loop do JS, então continua
+   avançando (e chega exatamente a 565.48→0 no fim da fase) mesmo com a
+   janela em segundo plano. O JS só dispara/pausa a animação nas mudanças de
+   estado (iniciar, pausar, pular, trocar de fase) — nunca a cada tick. */
+@keyframes ring-fill {
+    from { stroke-dashoffset: var(--ring-from, 565.48); }
+    to { stroke-dashoffset: var(--ring-to, 0); }
+}
+
+.ring-progress.is-animating {
+    animation-name: ring-fill;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+.timer-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.timer-clock {
+    font-family: var(--font-mono);
+    font-size: 34px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0;
+}
+
+.timer-phase-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--phase-color);
+}
+
+.controls { display: flex; align-items: center; justify-content: center; gap: 16px; }
+
+.ctrl-btn {
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 120ms var(--spring), box-shadow 120ms var(--ease), background 150ms var(--ease), border-color 150ms var(--ease);
+}
+
+.ctrl-btn--ghost {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-dim);
+}
+.ctrl-btn--ghost svg { width: 18px; height: 18px; }
+.ctrl-btn--ghost:hover { border-color: var(--text-faint); color: var(--text); transform: translateY(-1px); }
+.ctrl-btn--ghost:active { transform: translateY(0); }
+
+.ctrl-btn--primary {
+    width: 64px;
+    height: 64px;
+    border: 2px solid var(--phase-color);
+    background: var(--phase-soft);
+    color: var(--phase-color);
+    box-shadow: 4px 4px 0 0 var(--pop);
+}
+.ctrl-btn--primary svg { width: 26px; height: 26px; }
+.ctrl-btn--primary:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 0 var(--pop); background: var(--phase-color); color: #fff; }
+.ctrl-btn--primary:active { transform: translate(3px, 3px); box-shadow: 0 0 0 0 var(--pop); }
+
+.cycle-count {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--text-faint);
+    letter-spacing: 0.04em;
+}
+
+/* ---------------------------------------------------------------- Sections */
+.section-title {
+    margin: 0 0 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+}
+.section-title::before { content: "["; margin-right: 0.5ch; color: var(--phase-color); }
+.section-title::after { content: "]"; margin-left: 0.5ch; color: var(--phase-color); }
+
+/* ---------------------------------------------------------------- Mode cards */
+.mode-cards { display: flex; flex-direction: column; gap: 10px; }
+
+.mode-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    padding: 11px 13px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: inherit;
+    cursor: pointer;
+    font-family: inherit;
+    animation: fade 260ms var(--ease) both;
+    transition: border-color 160ms var(--ease), background 160ms var(--ease), transform 120ms var(--ease);
+}
+.mode-card:nth-child(1) { animation-delay: 30ms; }
+.mode-card:nth-child(2) { animation-delay: 70ms; }
+.mode-card:nth-child(3) { animation-delay: 110ms; }
+
+.mode-card:hover { border-color: var(--text-faint); background: var(--surface-2); }
+.mode-card:active { transform: scale(0.99); }
+
+.mode-card[data-phase="focus"] { --card-color: var(--focus); --card-soft: var(--focus-soft); --card-ghost: var(--focus-ghost); }
+.mode-card[data-phase="short"] { --card-color: var(--short); --card-soft: var(--short-soft); --card-ghost: var(--short-ghost); }
+.mode-card[data-phase="long"] { --card-color: var(--long); --card-soft: var(--long-soft); --card-ghost: var(--long-ghost); }
+
+.mode-card[aria-checked="true"] {
+    border-color: var(--card-color);
+    background: linear-gradient(180deg, var(--card-soft), transparent 140%);
+    box-shadow: 0 0 0 2px var(--card-color), 6px 6px 0 0 var(--card-ghost);
+    transform: translate(-2px, -2px);
+}
+
+.mode-icon {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--surface-3);
+    color: var(--text-faint);
+    transition: background 160ms var(--ease), color 160ms var(--ease);
+}
+.mode-icon svg { width: 18px; height: 18px; }
+.mode-card[aria-checked="true"] .mode-icon { background: var(--card-color); color: #fff; }
+
+.mode-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mode-name { font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+.mode-desc { margin-top: 2px; font-size: 12px; color: var(--text-dim); }
+
+.mode-check {
+    flex: none;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: grid;
+    place-items: center;
+    transition: border-color 160ms var(--ease), background 160ms var(--ease);
+}
+.mode-check svg { width: 11px; height: 11px; opacity: 0; transform: scale(0.4); transition: opacity 160ms var(--ease), transform 220ms var(--spring); }
+.mode-card[aria-checked="true"] .mode-check { border-color: var(--card-color); background: var(--card-color); }
+.mode-card[aria-checked="true"] .mode-check svg { opacity: 1; transform: scale(1); }
+
+.modes-note { margin: 8px 2px 0; font-size: 11px; color: var(--text-faint); }
+
+/* ---------------------------------------------------------------- Advanced / Settings */
+.advanced-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 160ms var(--ease), border-color 160ms var(--ease);
+}
+.advanced-toggle:hover { background: var(--surface-2); border-color: var(--text-faint); }
+.advanced-toggle .chevron { transition: transform 200ms var(--ease); color: var(--text-faint); }
+.advanced-toggle[aria-expanded="true"] .chevron { transform: rotate(180deg); }
+
+.advanced-panel {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: rise 180ms var(--ease) both;
+}
+
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.setting-row label { font-size: 12.5px; color: var(--text-dim); }
+
+.setting-row input[type="number"] {
+    width: 64px;
+    padding: 7px 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    text-align: center;
+}
+.setting-row input[type="number"]:focus-visible { outline: none; border-color: var(--focus); box-shadow: 0 0 0 3px var(--focus-soft); }
+
+/* Switch estilo pill, mesma linguagem dos outros controles. */
+.switch {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    position: relative;
+    cursor: pointer;
+    flex: none;
+    transition: background 160ms var(--ease), border-color 160ms var(--ease);
+}
+.switch::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    transition: transform 180ms var(--spring), background 160ms var(--ease);
+}
+.switch:checked { background: var(--focus-soft); border-color: var(--focus); }
+.switch:checked::after { transform: translateX(16px); background: var(--focus); }
+
+.settings-reset {
+    align-self: flex-start;
+    border: 0;
+    background: transparent;
+    color: var(--text-faint);
+    font-family: inherit;
+    font-size: 11.5px;
+    cursor: pointer;
+    padding: 2px 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.settings-reset:hover { color: var(--text-dim); }
+
+/* ---------------------------------------------------------------- Footer */
+.app-footer { text-align: center; }
+.footer-note { margin: 0; font-size: 11px; color: var(--text-faint); }
+
+/* ---------------------------------------------------------------- Focus */
+.mode-card:focus-visible,
+.advanced-toggle:focus-visible,
+.icon-btn:focus-visible,
+.ctrl-btn:focus-visible,
+.settings-reset:focus-visible {
+    outline: 2px solid var(--phase-color);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-delay: 0ms !important;
+        transition-duration: 0.001ms !important;
+    }
+}

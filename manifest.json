@@ -1,0 +1,41 @@
+{
+  "manifest_version": 3,
+  "name": "POMODO — Timer Pomodoro",
+  "version": "1.0.0",
+  "description": "Gerencie seus ciclos de foco e descanso direto do navegador com a técnica Pomodoro.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "POMODO",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "alarms",
+    "notifications"
+  ],
+  "commands": {
+    "toggle-timer": {
+      "suggested_key": { "default": "Ctrl+Shift+P", "mac": "Command+Shift+P" },
+      "description": "Iniciar ou pausar o timer"
+    },
+    "skip-phase": {
+      "suggested_key": { "default": "Ctrl+Shift+K", "mac": "Command+Shift+K" },
+      "description": "Pular para o próximo ciclo"
+    }
+  }
+}
